@@ -34,6 +34,12 @@ abstract class AbstractUtility extends OrderBag
 		return property_exists(self::class, $key);
 	}
 
+	/**
+	 * @param $key
+	 * @param $value
+	 * @throws \InvalidArgumentException
+	 * @return mixed
+	 */
 	public function setConfig($key, $value)
 	{
 		$key = trim($key);
@@ -42,20 +48,21 @@ abstract class AbstractUtility extends OrderBag
 			$this->$key = $value;
 
 			return $value;
-		} else {
-			trigger_error('config key not exists.');
-
-			return false;
 		}
+
+		throw new \InvalidArgumentException('config key not exists.');
 	}
 
+	/**
+	 * @param $key
+	 * @throws \InvalidArgumentException
+	 * @return mixed
+	 */
 	public function getConfig($key)
 	{
 		$key = trim($key);
 
 		if ($this->isExists($key)) return $this->$key;
-		trigger_error('config key not exists.');
-
-		return false;
+		throw new \InvalidArgumentException('config key not exists.');
 	}
 }

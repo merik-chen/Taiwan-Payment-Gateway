@@ -208,6 +208,7 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 	{
 
 		if (
+			!isset($this->order['UNIONPAY']) &&
 			!isset($this->order['BARCODE']) &&
 			!isset($this->order['CREDIT']) &&
 			!isset($this->order['WEBATM']) &&
@@ -218,11 +219,11 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 		}
 
 		if (
-			in_array('BARCODE', $this->order) ||
-			in_array('VACC', $this->order) ||
-			in_array('CVS', $this->order)
+			isset($this->order['BARCODE']) ||
+			isset($this->order['VACC']) ||
+			isset($this->order['CVS'])
 		) {
-			if (!isset($this->paymentInfoUrl)) throw new \InvalidArgumentException('PaymentInfoURL not set');
+			if (empty($this->paymentInfoUrl)) throw new \InvalidArgumentException('PaymentInfoURL not set');
 		}
 
 		if (!isset($this->order['LoginType'])) $this->order['LoginType'] = 0;
