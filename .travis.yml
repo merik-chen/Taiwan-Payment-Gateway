@@ -22,7 +22,7 @@ sudo: false
 
 addons:
   code_climate:
-    repo_token: 9ae306657e37eb2e94d1a8ee82d0993b819f75d48c35d6b0b949c56bb02964a7
+    repo_token: 2bfcb1c8bebcc92bcbeb2456a7b38386367548cac78530829f0eac14c8a49105
 
 before_install:
   - travis_retry composer self-update
