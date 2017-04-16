@@ -5,6 +5,8 @@ Taiwan Payment Gateway
 
 Created by [VoiceTube](https://www.voicetube.com/)
 
+[![Build Status](https://travis-ci.org/merik-chen/Taiwan-Payment-Gateway.svg?branch=reflow-alpha)](https://travis-ci.org/merik-chen/Taiwan-Payment-Gateway)
+
 Features
 --------
 

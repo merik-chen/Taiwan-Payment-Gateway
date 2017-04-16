@@ -20,6 +20,10 @@ matrix:
 
 sudo: false
 
+addons:
+  code_climate:
+    repo_token: 9ae306657e37eb2e94d1a8ee82d0993b819f75d48c35d6b0b949c56bb02964a7
+
 before_install:
   - travis_retry composer self-update
 
@@ -29,3 +33,6 @@ install:
   - if [[ $setup = 'lowest' ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-lowest --prefer-stable; fi
 
 script: vendor/bin/phpcs --standard=PSR2 src && vendor/bin/phpunit --coverage-text
+
+after_success:
+  - vendor/bin/test-reporter
