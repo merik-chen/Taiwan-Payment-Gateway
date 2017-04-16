@@ -21,33 +21,31 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 		'ts' => 1492287995
 	];
 
+	protected $config = [
+		'hashKey'       => '5294y06JbISpM5x9',
+		'hashIV'        => 'v77hoKGq4kWxNNIS',
+		'merchantId'    => '2000132',
+		'version'       => 'V2',
+		'actionUrl'     => 'https://ccore.spgateway.com/MPG/mpg_gateway',
+		'returnUrl'     => 'https://localhost/tpg/confirm',
+		'notifyUrl'     => '',
+		'clientBackUrl' => 'https://localhost/tpg/return',
+	];
+
 	function __construct($name = null, array $data = [], $dataName = '')
 	{
 		parent::__construct($name, $data, $dataName);
-		$this->gw = new AllPayPaymentGateway([
-			'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-			'hashIV'        => 'KHQ49UsmwMZJk6D1',
-			'merchantId'    => 'MS11434419',
-			'version'       => '1.2',
-			'actionUrl'     => 'https://ccore.spgateway.com/MPG/mpg_gateway',
-			'returnUrl'     => 'https://localhost/tpg/confirm',
-			'notifyUrl'     => '',
-			'clientBackUrl' => 'https://localhost/tpg/return',
-		]);
+		$this->gw = new AllPayPaymentGateway($this->config);
 	}
 
 	public function testConstruct()
 	{
-		$this->gw = new AllPayPaymentGateway([
-			'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-			'hashIV'        => 'KHQ49UsmwMZJk6D1',
-			'merchantId'    => 'MS11434419',
-			'version'       => '1.2',
-			'actionUrl'     => 'https://ccore.spgateway.com/MPG/mpg_gateway',
-			'returnUrl'     => 'https://localhost/tpg/confirm',
-			'notifyUrl'     => '',
-			'clientBackUrl' => 'https://localhost/tpg/return',
-		]);
+		$config = $this->config;
+
+		unset($config['version']);
+		unset($config['actionUrl']);
+
+		$this->gw = new AllPayPaymentGateway($config);
 		$this->assertInstanceOf(AllPayPaymentGateway::class, $this->gw);
 	}
 
@@ -179,14 +177,11 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoHashIv()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => null, //'KHQ49UsmwMZJk6D1',
-				'merchantId'    => 'MS11434419',
-				'returnUrl'     => 'https://localhost/tpg/confirm',
-				'notifyUrl'     => '',
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+			$config = $this->config;
+
+			unset($config['hashIV']);
+
+			$gw = new AllPayPaymentGateway($config);
 
 			$gw->newOrder($this->order['mid'],
 				$this->order['amount'],
@@ -204,14 +199,12 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoHashKey()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => null, //'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => 'KHQ49UsmwMZJk6D1',
-				'merchantId'    => 'MS11434419',
-				'returnUrl'     => 'https://localhost/tpg/confirm',
-				'notifyUrl'     => '',
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+
+			$config = $this->config;
+
+			unset($config['hashKey']);
+
+			$gw = new AllPayPaymentGateway($config);
 
 			$gw->newOrder($this->order['mid'],
 				$this->order['amount'],
@@ -229,14 +222,11 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoMerchantID()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => 'KHQ49UsmwMZJk6D1',
-				'merchantId'    => null, //'MS11434419',
-				'returnUrl'     => 'https://localhost/tpg/confirm',
-				'notifyUrl'     => '',
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+			$config = $this->config;
+
+			unset($config['merchantId']);
+
+			$gw = new AllPayPaymentGateway($config);
 
 			$gw->newOrder($this->order['mid'],
 				$this->order['amount'],
@@ -254,14 +244,11 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoReturnURL()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => 'KHQ49UsmwMZJk6D1',
-				'merchantId'    => 'MS11434419',
-				'returnUrl'     => null, //'https://localhost/tpg/confirm',
-				'notifyUrl'     => '',
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+			$config = $this->config;
+
+			unset($config['returnUrl']);
+
+			$gw = new AllPayPaymentGateway($config);
 
 			$gw->newOrder($this->order['mid'],
 				$this->order['amount'],
@@ -278,14 +265,11 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 
 	public function testNewOrderSetNotifyURL()
 	{
-		$gw = new AllPayPaymentGateway([
-			'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-			'hashIV'        => 'KHQ49UsmwMZJk6D1',
-			'merchantId'    => 'MS11434419',
-			'returnUrl'     => 'https://localhost/tpg/confirm',
-			'notifyUrl'     => 'https://localhost/tpg/notify',
-			'clientBackUrl' => 'https://localhost/tpg/return',
-		]);
+		$config = $this->config;
+
+		$config['notifyUrl'] = 'https://localhost/tpg/notify';
+
+		$gw = new AllPayPaymentGateway($config);
 
 		$gw->newOrder($this->order['mid'],
 			$this->order['amount'],
@@ -300,16 +284,11 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoNotifyUrl()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => 'KHQ49UsmwMZJk6D1',
-				'merchantId'    => 'MS11434419',
-				'returnUrl'     => 'https://localhost/tpg/confirm',
-				'notifyUrl'     => null,
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+			$config = $this->config;
 
-			$gw->setConfig('paymentInfoUrl', 'https://localhost/tpg/info');
+			unset($config['notifyUrl']);
+
+			$gw = new AllPayPaymentGateway($config);
 
 			$gw->newOrder($this->order['mid'],
 				$this->order['amount'],
@@ -327,14 +306,7 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testNewOrderNoActionURL()
 	{
 		try {
-			$gw = new AllPayPaymentGateway([
-				'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-				'hashIV'        => 'KHQ49UsmwMZJk6D1',
-				'merchantId'    => 'MS11434419',
-				'returnUrl'     => 'https://localhost/tpg/confirm',
-				'notifyUrl'     => '',
-				'clientBackUrl' => 'https://localhost/tpg/return',
-			]);
+			$gw = new AllPayPaymentGateway($this->config);
 
 			$gw->setConfig('actionUrl', 0);
 
@@ -353,14 +325,7 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 
 	public function testNewOrderSetPaymentInfoURL()
 	{
-		$gw = new AllPayPaymentGateway([
-			'hashKey'       => 'a73rjr4ocBjDcy6UGltXINJBw2NcdCEo',
-			'hashIV'        => 'KHQ49UsmwMZJk6D1',
-			'merchantId'    => 'MS11434419',
-			'returnUrl'     => 'https://localhost/tpg/confirm',
-			'notifyUrl'     => '',
-			'clientBackUrl' => 'https://localhost/tpg/return',
-		]);
+		$gw = new AllPayPaymentGateway($this->config);
 
 		$gw->setConfig('paymentInfoUrl', 'https://localhost/tpg/info');
 
