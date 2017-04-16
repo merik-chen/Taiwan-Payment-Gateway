@@ -151,7 +151,7 @@ class SpGatewayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 			$this->assertEquals('Payment method not set', $e->getMessage());
 		}
 	}
-	
+
 	public function testPaymentInfoUrlNotSet()
 	{
 		try{

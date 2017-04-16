@@ -21,6 +21,7 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 		'ts' => 1492287995
 	];
 
+
 	protected $config = [
 		'hashKey'       => '5294y06JbISpM5x9',
 		'hashIV'        => 'v77hoKGq4kWxNNIS',
@@ -40,6 +41,7 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 
 	public function testConstruct()
 	{
+
 		$config = $this->config;
 
 		unset($config['version']);
@@ -84,6 +86,7 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 	public function testGenOrderForm()
 	{
 		$this->testNewOrder();
+
 		$this->gw->useCredit()->needExtraPaidInfo()->setCreditInstallment(3, $this->order['amount']);
 		$this->assertNotEmpty($this->gw->genForm(false));
 	}
@@ -172,7 +175,6 @@ class AllPayPaymentGatewayTest extends \PHPUnit_Framework_TestCase
 			->useALL()
 			->setConfig('paymentInfoUrl', 'https://localhost/payment/information');
 	}
-
 
 	public function testNewOrderNoHashIv()
 	{

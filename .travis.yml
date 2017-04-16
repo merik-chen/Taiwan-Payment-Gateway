@@ -22,7 +22,7 @@ sudo: false
 
 addons:
   code_climate:
-    repo_token: $cc_token
+  repo_token: $cc_token
 
 before_install:
   - travis_retry composer self-update
