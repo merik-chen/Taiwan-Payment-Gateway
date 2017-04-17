@@ -206,7 +206,7 @@ class EcPayPaymentGateway extends Common\AbstractGateway implements Common\Gatew
     public function genForm($autoSubmit)
     {
 
-        $autoSubmit = !!$autoSubmit;
+        $this->autoSubmit = !!$autoSubmit;
 
         if (!isset($this->order['ChoosePayment'])) {
             throw new \InvalidArgumentException('Payment method not set');
@@ -223,7 +223,7 @@ class EcPayPaymentGateway extends Common\AbstractGateway implements Common\Gatew
 
         $this->order['CheckMacValue'] = $this->genCheckValue();
 
-        $formId = sprintf("PG_FORM_GO_%s", sha1(time()));
+        $formId = sprintf("PG_ECPAY_FORM_GO_%s", sha1(time()));
 
         $html = sprintf(
             "<form style='display: none' id='%s' method='post' action='%s'>",
@@ -235,7 +235,7 @@ class EcPayPaymentGateway extends Common\AbstractGateway implements Common\Gatew
         }
         $html .= "</form>";
 
-        if ($autoSubmit) {
+        if ($this->autoSubmit) {
             $html .= sprintf("<script>document.getElementById('%s').submit();</script>", $formId);
         }
 

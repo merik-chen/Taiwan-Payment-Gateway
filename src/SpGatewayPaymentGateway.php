@@ -235,7 +235,7 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
      */
     public function genForm($autoSubmit)
     {
-        $autoSubmit = !!$autoSubmit;
+        $this->autoSubmit = !!$autoSubmit;
 
         $this->isPaymentMethodSelected();
 
@@ -257,7 +257,7 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
         $this->order['CheckValue'] = $this->genCheckValue();
 
-        $formId = sprintf("PG_FORM_GO_%s", sha1(time()));
+        $formId = sprintf("PG_SPGATEWAY_FORM_GO_%s", sha1(time()));
 
         $html = sprintf(
             "<form style='display: none' id='%s' method='post' action='%s'>",
@@ -269,7 +269,7 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         }
         $html .= "</form>";
 
-        if ($autoSubmit) {
+        if ($this->autoSubmit) {
             $html .= sprintf("<script>document.getElementById('%s').submit();</script>", $formId);
         }
 

@@ -8,6 +8,7 @@ class AllPayPaymentResponse extends Common\AbstractResponse implements Common\Re
 {
     public function processOrder($type = 'POST')
     {
+        unset($type);
         return $this->processOrderPost();
     }
 

@@ -8,6 +8,7 @@ class EcPayPaymentResponse extends Common\AbstractResponse implements Common\Res
 {
     public function processOrder($type = 'POST')
     {
+        unset($type);
         return $this->processOrderPost();
     }
 
