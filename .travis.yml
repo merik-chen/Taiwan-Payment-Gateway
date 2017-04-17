@@ -1,44 +1,38 @@
 notifications:
-  slack: $slack_notify_token
-
+  slack:
+    rooms:
+      secure: Xvj5+2azQNtE0lUF04+dJNA/LKqaIw2SMyoSakVVyNyKUJWdrWtsF7vucBYEIlOF5aSYeUNTvebAN7SYDXjvD6DltFsik96zvxLVicL+Uy+RZmEAQXxwTxKICkX8Uv/45ngRjLwJqboHI+UmsiJaZNAo1a/EBYj5BnD+XEzoKLWPqeK6rodes6/H80+3FVnJwWF9WyjJML7s1IvedRYOb/Xg3/ecOyvsbI3DYWXiKg3o0tyAcYX/Mk5XLVeO/B6c/Rd3GEppQzXueTq5sP/oArRCQVJXqgbNedL3Q7/Jy/FUFGy9olxsf7K9b83PR/Ys9NLuhlDgWDOS30aMEe0TjJbJEQWZsWRyWoFt1NGZMBTtolK5aH3wfmahr9m2gM3d6DGEtKJ6Wyv56KlKrbZWEdVwzdPLc01Qe6bVimkbMRMFvylSe6ncIWefs9FsjtMNCFrg6mec3hHB2TWQtLBnbgfeFgKTNgYUJ3vwGVYaPTuzQQMVyM9nBldwzIv73BQ8ZSUUGA1ou1Sx85QupeqIafgbbQtVvCfL/WOuPt+P0fjpRUF4DlcdjYFBDS6lFPMK/upShGYe4LWKZQcGt8itdjBhJaRK55vPyRz6m1eOALWn7w8/Yskz6OmiidBT59CvXavoztkOLZXEk3vMVHbdn9S2morQQKdCxjzg57xBC88=
 branches:
   only:
-    - master
-
+  - master
 language: php
 php:
-  - '5.5'
-  - '5.6'
-  - '7.0'
-  - '7.1'
-
+- '5.5'
+- '5.6'
+- '7.0'
+- '7.1'
 env:
   global:
-    - setup=basic
-
+  - setup=basic
 matrix:
   include:
-    - php: 5.5
-      env: setup=lowest
-    - php: 7.0
-      env: setup=stable
-
-
+  - php: 5.5
+    env: setup=lowest
+  - php: 7.0
+    env: setup=stable
 sudo: false
-
 addons:
   code_climate:
     repo_token: $cc_token
-
 before_install:
-  - travis_retry composer self-update
-
+- travis_retry composer self-update
 install:
-  - if [[ $setup = 'basic' ]]; then travis_retry composer install --no-interaction --prefer-dist; fi
-  - if [[ $setup = 'stable' ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-stable; fi
-  - if [[ $setup = 'lowest' ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-lowest --prefer-stable; fi
-
+- if [[ $setup = 'basic' ]]; then travis_retry composer install --no-interaction --prefer-dist;
+  fi
+- if [[ $setup = 'stable' ]]; then travis_retry composer update --prefer-dist --no-interaction
+  --prefer-stable; fi
+- if [[ $setup = 'lowest' ]]; then travis_retry composer update --prefer-dist --no-interaction
+  --prefer-lowest --prefer-stable; fi
 script: vendor/bin/phpcs --standard=PSR2 src && vendor/bin/phpunit --coverage-text
-
 after_success:
-  - vendor/bin/test-reporter
+- vendor/bin/test-reporter
