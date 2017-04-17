@@ -218,11 +218,6 @@ class AllPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInte
         return $this;
     }
 
-    public function genForm($autoSubmit)
-    {
-        return parent::genForm($autoSubmit);
-    }
-
     /**
      * @return string
      */
