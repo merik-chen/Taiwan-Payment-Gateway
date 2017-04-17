@@ -113,31 +113,31 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
 
     /**
      * @param integer $months
-     * @param integer $total_amount
+     * @param integer $totalAmount
      * @return AllPayPaymentGateway
      */
-    public function setCreditInstallment($months, $total_amount = 0)
+    public function setCreditInstallment($months, $totalAmount = 0)
     {
         $this->order['CreditInstallment'] = $months;
-        if ($total_amount) {
-            $this->order['InstallmentAmount'] = $total_amount;
+        if ($totalAmount) {
+            $this->order['InstallmentAmount'] = $totalAmount;
         }
         return $this;
     }
 
     /**
-     * @param int|string $expire_Date
+     * @param int|string $expireDate
      * @return AllPayPaymentGateway
      */
-    public function setOrderExpire($expire_Date)
+    public function setOrderExpire($expireDate)
     {
-        if (is_numeric($expire_Date)) {
-            $expire_Date = intval($expire_Date);
+        if (is_numeric($expireDate)) {
+            $expireDate = intval($expireDate);
         }
 
         switch ($this->order['ChoosePayment']) {
             case 'ATM':
-                $this->order['ExpireDate'] = $expire_Date;
+                $this->order['ExpireDate'] = $expireDate;
                 break;
             case 'Tenpay':
             case 'CVS':
@@ -146,12 +146,12 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
                     59,
                     59,
                     date('m'),
-                    date('d') + $expire_Date,
+                    date('d') + $expireDate,
                     date('Y')
                 ) - time();
                 break;
             case 'BARCODE':
-                $this->order['StoreExpireDate'] = $expire_Date;
+                $this->order['StoreExpireDate'] = $expireDate;
                 break;
         }
         return $this;
@@ -175,43 +175,25 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
     }
 
     /**
-     * @param string $merchant_order_no
+     * @param string $merchantOrderNo
      * @param float|int $amount
-     * @param string $item_describe
-     * @param string $order_comment
-     * @param string $respond_type
+     * @param string $itemDescribe
+     * @param string $orderComment
+     * @param string $respondType
      * @param int $timestamp
      * @throws \InvalidArgumentException
      * @return AllPayPaymentGateway
      */
     public function newOrder(
-        $merchant_order_no,
+        $merchantOrderNo,
         $amount,
-        $item_describe,
-        $order_comment,
-        $respond_type = 'POST',
+        $itemDescribe,
+        $orderComment,
+        $respondType = 'POST',
         $timestamp = 0
     ) {
     
-        /**
-         * Argument Check
-         */
-        if (!isset($this->hashIV)) {
-            throw new \InvalidArgumentException('HashIV not set');
-        }
-        if (!isset($this->hashKey)) {
-            throw new \InvalidArgumentException('HashKey not set');
-        }
-        if (!isset($this->merchantId)) {
-            throw new \InvalidArgumentException('MerchantID not set');
-        }
-
-        if (!isset($this->returnUrl)) {
-            throw new \InvalidArgumentException('ReturnURL not set');
-        }
-        if (empty($this->actionUrl)) {
-            throw new \InvalidArgumentException('ActionURL not set');
-        }
+        $this->argumentChecker();
 
         $timestamp = empty($timestamp) ? time() : $timestamp;
 
@@ -220,10 +202,10 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
         $this->order['PaymentType'] = 'aio';
         $this->order['MerchantID'] = $this->merchantId;
         $this->order['MerchantTradeDate'] = date("Y/m/d H:i:s", $timestamp);
-        $this->order['MerchantTradeNo'] = $merchant_order_no;
+        $this->order['MerchantTradeNo'] = $merchantOrderNo;
         $this->order['TotalAmount'] = intval($amount);
-        $this->order['ItemName'] = $item_describe;
-        $this->order['TradeDesc'] = $order_comment;
+        $this->order['ItemName'] = $itemDescribe;
+        $this->order['TradeDesc'] = $orderComment;
         $this->order['EncryptType'] = 1;
 
         if (!empty($this->returnUrl)) {
@@ -237,11 +219,13 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
     }
 
     /**
-     * @param bool $auto_submit
+     * @param bool $autoSubmit
      * @return string
      */
-    public function genForm($auto_submit = true)
+    public function genForm($autoSubmit)
     {
+
+        $autoSubmit = !!$autoSubmit;
 
         if (!isset($this->order['ChoosePayment'])) {
             throw new \InvalidArgumentException('Payment method not set');
@@ -270,7 +254,7 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
         }
         $html .= "</form>";
 
-        if ($auto_submit) {
+        if ($autoSubmit) {
             $html .= sprintf("<script>document.getElementById('%s').submit();</script>", $formId);
         }
 
@@ -284,16 +268,16 @@ class AllPayPaymentGateway extends Common\AbstractGateway implements Common\Gate
     {
         uksort($this->order, 'strcasecmp');
 
-        $mer_array = array_merge(['HashKey' => $this->hashKey], $this->order, ['HashIV' => $this->hashIV]);
+        $merArray = array_merge(['HashKey' => $this->hashKey], $this->order, ['HashIV' => $this->hashIV]);
 
-        $check_mer_str = urldecode(http_build_query($mer_array));
+        $checkMerStr = urldecode(http_build_query($merArray));
 
-        foreach ($this->dot_net_url_encode_mapping as $key => $value) {
-            $check_mer_str = str_replace($key, $value, $check_mer_str);
+        foreach ($this->urlEncodeMapping as $key => $value) {
+            $checkMerStr = str_replace($key, $value, $checkMerStr);
         }
 
-        $check_mer_str = strtolower(urlencode($check_mer_str));
+        $checkMerStr = strtolower(urlencode($checkMerStr));
 
-        return strtoupper(hash('sha256', $check_mer_str));
+        return strtoupper(hash('sha256', $checkMerStr));
     }
 }
