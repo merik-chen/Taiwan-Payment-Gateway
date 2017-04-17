@@ -11,6 +11,9 @@ env:
   global:
     - setup=basic
 
+notifications:
+  slack: $slack_notify_token
+
 matrix:
   include:
     - php: 5.5
