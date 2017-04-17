@@ -93,10 +93,9 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
     /**
      * @param integer $months
-     * @param integer $totalAmount
      * @return SpGatewayPaymentGateway
      */
-    public function setCreditInstallment($months, $totalAmount = 0)
+    public function setCreditInstallment($months)
     {
         $this->order['InstFlag'] = $months;
         return $this;

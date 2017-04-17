@@ -50,10 +50,9 @@ interface GatewayInterface
 
     /**
      * @param integer|string $months
-     * @param integer $totalAmount
      * @return GatewayInterface
      */
-    public function setCreditInstallment($months, $totalAmount = 0);
+    public function setCreditInstallment($months);
 
     /**
      * @param bool $autoSubmit

@@ -95,7 +95,7 @@ class EcPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInter
 
     /**
      * @param integer $months
-     * @param integer $totalAmount
+     * @param integer|float $totalAmount
      * @return EcPayPaymentGateway
      */
     public function setCreditInstallment($months, $totalAmount = 0)
