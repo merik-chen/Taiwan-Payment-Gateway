@@ -96,7 +96,7 @@ class AllPayPaymentResponse extends Common\AbstractResponse implements Common\Re
 
         $checkMerStr = strtolower(urlencode($checkMerStr));
 
-        return $checkMacValue == strtoupper(hash('sha256', $checkMerStr));
+        return $checkMacValue == strtoupper($this->hashMaker($checkMerStr));
     }
 
     public function rspOk()

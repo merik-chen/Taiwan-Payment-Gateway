@@ -216,6 +216,6 @@ class EcPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInter
 
         $checkMerStr = strtolower(urlencode($checkMerStr));
 
-        return strtoupper(hash('sha256', $checkMerStr));
+        return strtoupper($this->hashMaker($checkMerStr));
     }
 }

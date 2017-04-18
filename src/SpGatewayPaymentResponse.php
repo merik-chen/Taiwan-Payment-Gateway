@@ -110,6 +110,6 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
 
         $checkStr = http_build_query($checkCode);
 
-        return $matchedCode == strtoupper(hash("sha256", $checkStr));
+        return $matchedCode == strtoupper($this->hashMaker($checkStr));
     }
 }
