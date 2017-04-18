@@ -282,101 +282,106 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
      */
     public function genCheckValue($type = 'payment')
     {
-	    $merArray = [
-		    'MerchantOrderNo' => $this->order['MerchantOrderNo'],
-		    'MerchantID'      => $this->merchantId,
-	    ];
+        $merArray = [
+            'MerchantOrderNo' => $this->order['MerchantOrderNo'],
+            'MerchantID'      => $this->merchantId,
+        ];
 
-    	switch ($type) {
-		    case 'status':
-			    $merArray['Amt'] = $this->order['Amt'];
-		    	break;
-	        case 'statusCheck':
-			    $merArray['Amt'] = $this->order['Amt'];
-			    $merArray['TradeNo'] = $this->order['TradeNo'];
-		    	break;
-		    case 'payment':
-		    default:
-			    $merArray['Amt'] = $this->order['Amt'];
-			    $merArray['Version'] = $this->version;
-			    $merArray['TimeStamp'] = $this->order['TimeStamp'];
-		    	break;
-	    }
+        switch ($type) {
+            case 'status':
+                $merArray['Amt'] = $this->order['Amt'];
+                break;
+            case 'statusCheck':
+                $merArray['Amt'] = $this->order['Amt'];
+                $merArray['TradeNo'] = $this->order['TradeNo'];
+                break;
+            case 'payment':
+            default:
+                $merArray['Amt'] = $this->order['Amt'];
+                $merArray['Version'] = $this->version;
+                $merArray['TimeStamp'] = $this->order['TimeStamp'];
+                break;
+        }
 
         ksort($merArray);
 
-	    switch ($type) {
-		    case 'status':
-			    $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
-			    break;
-		    case 'statusCheck':
-			    $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
-			    break;
-		    case 'payment':
-		    default:
-			    $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
-			    break;
-	    }
+        switch ($type) {
+            case 'status':
+                $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
+                break;
+            case 'statusCheck':
+                $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
+                break;
+            case 'payment':
+            default:
+                $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
+                break;
+        }
 
         $checkMerStr = http_build_query($merArray);
 
         return strtoupper($this->hashMaker($checkMerStr));
     }
 
-	/**
-	 * @param null|string $merchantOrderNo
-	 * @param null|integer|float $amount
-	 * @param null|boolean $sandbox
-	 * @return bool
-	 */
-	public function getPaymentStatus($merchantOrderNo = null, $amount = null, $sandbox = null)
-	{
-		$sandbox = !!$sandbox;
+    /**
+     * @param null|string $merchantOrderNo
+     * @param null|integer|float $amount
+     * @param null|boolean $sandbox
+     * @return bool
+     */
+    public function getPaymentStatus($merchantOrderNo = null, $amount = null, $sandbox = null)
+    {
+        $sandbox = !!$sandbox;
 
-		$endpoint = $sandbox ?
-			'https://ccore.spgateway.com/API/QueryTradeInfo' :
-			'https://core.spgateway.com/API/QueryTradeInfo';
+        $endpoint = $sandbox ?
+            'https://ccore.spgateway.com/API/QueryTradeInfo' :
+            'https://core.spgateway.com/API/QueryTradeInfo';
 
-		$client = new Client();
+        $client = new Client();
 
-		$this->clearOrder();
+        $this->clearOrder();
 
-		$this->order['Amt'] = $amount;
-		$this->order['MerchantOrderNo'] = $merchantOrderNo;
+        $this->order['Amt'] = $amount;
+        $this->order['MerchantOrderNo'] = $merchantOrderNo;
 
-		$code = $this->genCheckValue('status');
+        $code = $this->genCheckValue('status');
 
-		$result = $client->post($endpoint, [
-			'form_params' => [
-				'Amt' => $amount,
-				'Version' => '1.1',
-				'TimeStamp' => time(),
-				'MerchantID' => $this->merchantId,
-				'CheckValue' => $code,
-				'RespondType' => 'JSON',
-				'MerchantOrderNo' => $merchantOrderNo,
-			]
-		]);
+        $result = $client->post($endpoint, [
+            'form_params' => [
+                'Amt' => $amount,
+                'Version' => '1.1',
+                'TimeStamp' => time(),
+                'MerchantID' => $this->merchantId,
+                'CheckValue' => $code,
+                'RespondType' => 'JSON',
+                'MerchantOrderNo' => $merchantOrderNo,
+            ]
+        ]);
 
-		if ($result->getStatusCode() != 200) return false;
+        if ($result->getStatusCode() != 200) {
+            return false;
+        }
 
-		$response = json_decode($result->getBody()->getContents(), true);
+        $response = json_decode($result->getBody()->getContents(), true);
 
-		if ($response['Status'] != 'SUCCESS') return false;
+        if ($response['Status'] != 'SUCCESS') {
+            return false;
+        }
 
-		$this->clearOrder();
+        $this->clearOrder();
 
-		$this->order['Amt'] = $response['Result']['Amt'];
-		$this->order['TradeNo'] = $response['Result']['TradeNo'];
-		$this->order['MerchantOrderNo'] = $response['Result']['MerchantOrderNo'];
+        $this->order['Amt'] = $response['Result']['Amt'];
+        $this->order['TradeNo'] = $response['Result']['TradeNo'];
+        $this->order['MerchantOrderNo'] = $response['Result']['MerchantOrderNo'];
 
-		$rspChkCode = $this->genCheckValue('statusCheck');
+        $rspChkCode = $this->genCheckValue('statusCheck');
 
-		$this->clearOrder();
+        $this->clearOrder();
 
-		if ($response['Result']['CheckCode'] != $rspChkCode) return false;
+        if ($response['Result']['CheckCode'] != $rspChkCode) {
+            return false;
+        }
 
-		return $response['Result'];
-
+        return $response['Result'];
     }
 }

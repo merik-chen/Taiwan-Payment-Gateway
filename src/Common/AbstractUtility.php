@@ -67,8 +67,8 @@ abstract class AbstractUtility extends OrderBag
         throw new \InvalidArgumentException('config key not exists.');
     }
 
-	public function hashMaker($data, $algo = 'sha256')
-	{
-		return hash($algo, $data);
+    public function hashMaker($data, $algo = 'sha256')
+    {
+        return hash($algo, $data);
     }
 }
