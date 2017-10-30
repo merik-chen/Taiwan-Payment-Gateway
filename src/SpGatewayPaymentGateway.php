@@ -8,6 +8,8 @@ use VoiceTube\TaiwanPaymentGateway\Common;
 class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\GatewayInterface
 {
 
+	private $aesPayload;
+
     /**
      * SpGatewayPaymentGateway constructor.
      * @param array $config
@@ -255,7 +257,21 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
             $this->order['EmailModify'] = 0;
         }
 
-        $this->order['CheckValue'] = $this->genCheckValue();
+        if ($this->version >= 1.4) {
+
+        	$this->genAesEncryptedPayment();
+
+        	$payment = [
+        		'MerchantID' => $this->merchantId,
+        		'TradeInfo' => $this->aesPayload,
+		        'TradeSha' => $this->genCheckValue(),
+		        'Version' => $this->version
+	        ];
+
+        	$this->order = $payment;
+        } else {
+	        $this->order['CheckValue'] = $this->genCheckValue();
+        }
 
         $formId = sprintf("PG_SPGATEWAY_FORM_GO_%s", sha1(time()));
 
@@ -282,43 +298,52 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
      */
     public function genCheckValue($type = 'payment')
     {
-        $merArray = [
-            'MerchantOrderNo' => $this->order['MerchantOrderNo'],
-            'MerchantID'      => $this->merchantId,
-        ];
 
-        switch ($type) {
-            case 'status':
-                $merArray['Amt'] = $this->order['Amt'];
-                break;
-            case 'statusCheck':
-                $merArray['Amt'] = $this->order['Amt'];
-                $merArray['TradeNo'] = $this->order['TradeNo'];
-                break;
-            case 'payment':
-            default:
-                $merArray['Amt'] = $this->order['Amt'];
-                $merArray['Version'] = $this->version;
-                $merArray['TimeStamp'] = $this->order['TimeStamp'];
-                break;
-        }
+    	if (($this->version >= 1.4) && ($type === 'payment')) {
+    		$checkMerStr = sprintf("HashKey=%s&%s&HashIV=%s",
+			    $this->hashKey,
+			    $this->aesPayload,
+			    $this->hashIV
+		    );
+	    } else {
+		    $merArray = [
+			    'MerchantOrderNo' => $this->order['MerchantOrderNo'],
+			    'MerchantID'      => $this->merchantId,
+		    ];
 
-        ksort($merArray);
+		    switch ($type) {
+			    case 'status':
+				    $merArray['Amt'] = $this->order['Amt'];
+				    break;
+			    case 'statusCheck':
+				    $merArray['Amt'] = $this->order['Amt'];
+				    $merArray['TradeNo'] = $this->order['TradeNo'];
+				    break;
+			    case 'payment':
+			    default:
+				    $merArray['Amt'] = $this->order['Amt'];
+				    $merArray['Version'] = $this->version;
+				    $merArray['TimeStamp'] = $this->order['TimeStamp'];
+				    break;
+		    }
 
-        switch ($type) {
-            case 'status':
-                $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
-                break;
-            case 'statusCheck':
-                $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
-                break;
-            case 'payment':
-            default:
-                $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
-                break;
-        }
+		    ksort($merArray);
 
-        $checkMerStr = http_build_query($merArray);
+		    switch ($type) {
+			    case 'status':
+				    $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
+				    break;
+			    case 'statusCheck':
+				    $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
+				    break;
+			    case 'payment':
+			    default:
+				    $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
+				    break;
+		    }
+
+		    $checkMerStr = http_build_query($merArray);
+	    }
 
         return strtoupper($this->hashMaker($checkMerStr));
     }
@@ -383,5 +408,45 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         }
 
         return $response['Result'];
+    }
+
+	public function genAesEncryptedPayment()
+	{
+		ksort($this->order);
+
+		$payloadQuery = http_build_query($this->order);
+
+		$rawEncrypted = openssl_encrypt(
+			$payloadQuery,
+			'aes-256-cbc',
+			$this->hashKey,
+			OPENSSL_RAW_DATA,
+			$this->hashIV
+		);
+
+		$this->aesPayload = bin2hex($rawEncrypted);
+
+		return $this->aesPayload;
+	}
+
+	public function genAesDecryptedPayment($encrypted)
+	{
+
+		$encryptedRaw = hex2bin($encrypted);
+
+		$decrypted = openssl_decrypt(
+			$encryptedRaw,
+			'aes-256-cbc',
+			$this->hashKey,
+			OPENSSL_RAW_DATA,
+			$this->hashIV
+		);
+
+		$decryptedJson = json_decode($decrypted, true);
+
+		if (json_last_error()) return $decrypted;
+
+		return $decryptedJson;
+
     }
 }
