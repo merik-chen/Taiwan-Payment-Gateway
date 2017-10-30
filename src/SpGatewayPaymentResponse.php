@@ -116,7 +116,7 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             $checkStr = sprintf(
                 "HashKey=%s&%s&HashIV=%s",
                 $this->hashKey,
-                $this->$payload['TradeInfo'],
+                $payload['TradeInfo'],
                 $this->hashIV
             );
         } else {
