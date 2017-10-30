@@ -114,10 +114,10 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             $matchedCode = $payload['TradeSha'];
 
             $checkStr = sprintf(
-                "HashIV=%s&%s&HashKey=%s",
-                $this->hashIV,
+                "HashKey=%s&%s&HashIV=%s",
+                $this->hashKey,
                 $this->$payload['TradeInfo'],
-                $this->hashKey
+                $this->hashIV
             );
         } else {
             $matchedCode = $payload['CheckCode'];
