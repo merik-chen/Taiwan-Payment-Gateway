@@ -5,4 +5,4 @@ composer.lock
 test*.*
 report/
 build/
-.travis.yml
+.travis.yml.bak
