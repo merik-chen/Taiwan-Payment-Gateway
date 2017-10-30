@@ -119,7 +119,6 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
                 $this->$payload['TradeInfo'],
                 $this->hashKey
             );
-
         } else {
             $matchedCode = $payload['CheckCode'];
 
