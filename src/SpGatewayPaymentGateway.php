@@ -433,26 +433,4 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
         return $this->aesPayload;
     }
-
-    public function genAesDecryptedPayment($encrypted)
-    {
-
-        $encryptedRaw = hex2bin($encrypted);
-
-        $decrypted = openssl_decrypt(
-            $encryptedRaw,
-            'aes-256-cbc',
-            $this->hashKey,
-            OPENSSL_RAW_DATA,
-            $this->hashIV
-        );
-
-        $decryptedJson = json_decode($decrypted, true);
-
-        if (json_last_error()) {
-            return $decrypted;
-        }
-
-        return $decryptedJson;
-    }
 }

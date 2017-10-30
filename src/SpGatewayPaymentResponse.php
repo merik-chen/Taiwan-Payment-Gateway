@@ -24,19 +24,30 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
      */
     public function processOrderJson()
     {
-        if (!isset($_POST['JSONData'])) {
-            return false;
+
+        if ($this->version >= 1.4) {
+            $post = $_POST;
+            if ($matched = $this->matchCheckCode($post)) {
+                $result = $this->decryptAesPayment($post['TradeInfo']);
+                $result['matched'] = true;
+            } else {
+                return false;
+            }
+        } else {
+            if (!isset($_POST['JSONData'])) {
+                return false;
+            }
+
+            $post = json_decode($_POST['JSONData'], true);
+
+            if ($post['Status'] !== 'SUCCESS') {
+                return false;
+            }
+
+            $result = json_decode($post['Result'], true);
+
+            $result['matched'] = $this->matchCheckCode($result);
         }
-
-        $post = json_decode($_POST['JSONData'], true);
-
-        if ($post['Status'] !== 'SUCCESS') {
-            return false;
-        }
-
-        $result = json_decode($post['Result'], true);
-
-        $result['matched'] = $this->matchCheckCode($result);
 
         return $result;
     }
@@ -99,21 +110,54 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
 
     public function matchCheckCode(array $payload = [])
     {
-        $matchedCode = $payload['CheckCode'];
+        if ($this->version >= 1.4) {
+            $matchedCode = $payload['TradeSha'];
 
-        $checkCode = [
-            "Amt"             => $payload['Amt'],
-            "TradeNo"         => $payload['TradeNo'],
-            "MerchantID"      => $payload['MerchantID'],
-            "MerchantOrderNo" => $payload['MerchantOrderNo'],
-        ];
+            $checkStr = sprintf(
+                "HashIV=%s&%s&HashKey=%s",
+                $this->hashIV,
+                $this->$payload['TradeInfo'],
+                $this->hashKey
+            );
 
-        ksort($checkCode);
+        } else {
+            $matchedCode = $payload['CheckCode'];
 
-        $checkCode = array_merge(['HashIV' => $this->hashIV], $checkCode, ['HashKey' => $this->hashKey]);
+            $checkCode = [
+                "Amt"             => $payload['Amt'],
+                "TradeNo"         => $payload['TradeNo'],
+                "MerchantID"      => $payload['MerchantID'],
+                "MerchantOrderNo" => $payload['MerchantOrderNo'],
+            ];
 
-        $checkStr = http_build_query($checkCode);
+            ksort($checkCode);
+
+            $checkCode = array_merge(['HashIV' => $this->hashIV], $checkCode, ['HashKey' => $this->hashKey]);
+            $checkStr = http_build_query($checkCode);
+        }
 
         return $matchedCode == strtoupper($this->hashMaker($checkStr));
+    }
+
+    public function decryptAesPayment($encrypted)
+    {
+
+        $encryptedRaw = hex2bin($encrypted);
+
+        $decrypted = openssl_decrypt(
+            $encryptedRaw,
+            'aes-256-cbc',
+            $this->hashKey,
+            OPENSSL_RAW_DATA,
+            $this->hashIV
+        );
+
+        $decryptedJson = json_decode($decrypted, true);
+
+        if (json_last_error()) {
+            return $decrypted;
+        }
+
+        return $decryptedJson;
     }
 }
