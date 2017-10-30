@@ -8,11 +8,12 @@ use VoiceTube\TaiwanPaymentGateway\Common;
 class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\GatewayInterface
 {
 
-	private $aesPayload;
+    private $aesPayload;
 
     /**
      * SpGatewayPaymentGateway constructor.
-     * @param array $config
+  *
+     * @param  array $config
      * @return SpGatewayPaymentGateway
      */
     public function __construct(array $config = [])
@@ -159,12 +160,12 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
     }
 
     /**
-     * @param string $merchantOrderNo
+     * @param string    $merchantOrderNo
      * @param float|int $amount
-     * @param string $itemDescribe
-     * @param string $orderComment
-     * @param string $respondType
-     * @param int $timestamp
+     * @param string    $itemDescribe
+     * @param string    $orderComment
+     * @param string    $respondType
+     * @param int       $timestamp
      * @throws \InvalidArgumentException
      * @return SpGatewayPaymentGateway
      */
@@ -177,6 +178,7 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         $timestamp = 0
     ) {
     
+
         /**
          * Argument Check
          */
@@ -220,12 +222,12 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
     protected function isPaymentMethodSelected()
     {
-        if (!isset($this->order['UNIONPAY']) &&
-            !isset($this->order['BARCODE']) &&
-            !isset($this->order['CREDIT']) &&
-            !isset($this->order['WEBATM']) &&
-            !isset($this->order['VACC']) &&
-            !isset($this->order['CVS'])
+        if (!isset($this->order['UNIONPAY'])
+            && !isset($this->order['BARCODE'])
+            && !isset($this->order['CREDIT'])
+            && !isset($this->order['WEBATM'])
+            && !isset($this->order['VACC'])
+            && !isset($this->order['CVS'])
         ) {
             throw new \InvalidArgumentException('Payment method not set');
         }
@@ -241,9 +243,9 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
         $this->isPaymentMethodSelected();
 
-        if (isset($this->order['BARCODE']) ||
-            isset($this->order['VACC']) ||
-            isset($this->order['CVS'])
+        if (isset($this->order['BARCODE'])
+            || isset($this->order['VACC'])
+            || isset($this->order['CVS'])
         ) {
             if (empty($this->paymentInfoUrl)) {
                 throw new \InvalidArgumentException('PaymentInfoURL not set');
@@ -258,19 +260,18 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         }
 
         if ($this->version >= 1.4) {
+            $this->genAesEncryptedPayment();
 
-        	$this->genAesEncryptedPayment();
+            $payment = [
+             'MerchantID' => $this->merchantId,
+             'TradeInfo'  => $this->aesPayload,
+             'TradeSha'   => $this->genCheckValue(),
+             'Version'    => $this->version
+            ];
 
-        	$payment = [
-        		'MerchantID' => $this->merchantId,
-        		'TradeInfo' => $this->aesPayload,
-		        'TradeSha' => $this->genCheckValue(),
-		        'Version' => $this->version
-	        ];
-
-        	$this->order = $payment;
+            $this->order = $payment;
         } else {
-	        $this->order['CheckValue'] = $this->genCheckValue();
+            $this->order['CheckValue'] = $this->genCheckValue();
         }
 
         $formId = sprintf("PG_SPGATEWAY_FORM_GO_%s", sha1(time()));
@@ -299,59 +300,60 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
     public function genCheckValue($type = 'payment')
     {
 
-    	if (($this->version >= 1.4) && ($type === 'payment')) {
-    		$checkMerStr = sprintf("HashKey=%s&%s&HashIV=%s",
-			    $this->hashKey,
-			    $this->aesPayload,
-			    $this->hashIV
-		    );
-	    } else {
-		    $merArray = [
-			    'MerchantOrderNo' => $this->order['MerchantOrderNo'],
-			    'MerchantID'      => $this->merchantId,
-		    ];
+        if (($this->version >= 1.4) && ($type === 'payment')) {
+            $checkMerStr = sprintf(
+                "HashKey=%s&%s&HashIV=%s",
+                $this->hashKey,
+                $this->aesPayload,
+                $this->hashIV
+            );
+        } else {
+            $merArray = [
+             'MerchantOrderNo' => $this->order['MerchantOrderNo'],
+             'MerchantID'      => $this->merchantId,
+            ];
 
-		    switch ($type) {
-			    case 'status':
-				    $merArray['Amt'] = $this->order['Amt'];
-				    break;
-			    case 'statusCheck':
-				    $merArray['Amt'] = $this->order['Amt'];
-				    $merArray['TradeNo'] = $this->order['TradeNo'];
-				    break;
-			    case 'payment':
-			    default:
-				    $merArray['Amt'] = $this->order['Amt'];
-				    $merArray['Version'] = $this->version;
-				    $merArray['TimeStamp'] = $this->order['TimeStamp'];
-				    break;
-		    }
+            switch ($type) {
+                case 'status':
+                    $merArray['Amt'] = $this->order['Amt'];
+                    break;
+                case 'statusCheck':
+                    $merArray['Amt'] = $this->order['Amt'];
+                    $merArray['TradeNo'] = $this->order['TradeNo'];
+                    break;
+                case 'payment':
+                default:
+                    $merArray['Amt'] = $this->order['Amt'];
+                    $merArray['Version'] = $this->version;
+                    $merArray['TimeStamp'] = $this->order['TimeStamp'];
+                    break;
+            }
 
-		    ksort($merArray);
+            ksort($merArray);
 
-		    switch ($type) {
-			    case 'status':
-				    $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
-				    break;
-			    case 'statusCheck':
-				    $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
-				    break;
-			    case 'payment':
-			    default:
-				    $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
-				    break;
-		    }
+            switch ($type) {
+                case 'status':
+                    $merArray = array_merge(['IV' => $this->hashIV], $merArray, ['Key' => $this->hashKey]);
+                    break;
+                case 'statusCheck':
+                    $merArray = array_merge(['HashIV' => $this->hashIV], $merArray, ['HashKey' => $this->hashKey]);
+                    break;
+                case 'payment':
+                default:
+                    $merArray = array_merge(['HashKey' => $this->hashKey], $merArray, ['HashIV' => $this->hashIV]);
+                    break;
+            }
 
-		    $checkMerStr = http_build_query($merArray);
-	    }
+            $checkMerStr = http_build_query($merArray);
+        }
 
         return strtoupper($this->hashMaker($checkMerStr));
     }
 
     /**
-     * @param null|string $merchantOrderNo
+     * @param null|string        $merchantOrderNo
      * @param null|integer|float $amount
-     * @param null|boolean $sandbox
+     * @param null|boolean       $sandbox
      * @return bool
      */
     public function getPaymentStatus($merchantOrderNo = null, $amount = null, $sandbox = null)
@@ -359,8 +361,8 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         $sandbox = !!$sandbox;
 
         $endpoint = $sandbox ?
-            'https://ccore.spgateway.com/API/QueryTradeInfo' :
-            'https://core.spgateway.com/API/QueryTradeInfo';
+         'https://ccore.spgateway.com/API/QueryTradeInfo' :
+         'https://core.spgateway.com/API/QueryTradeInfo';
 
         $client = new Client();
 
@@ -371,17 +373,20 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
 
         $code = $this->genCheckValue('status');
 
-        $result = $client->post($endpoint, [
+        $result = $client->post(
+            $endpoint,
+            [
             'form_params' => [
-                'Amt' => $amount,
-                'Version' => '1.1',
-                'TimeStamp' => time(),
-                'MerchantID' => $this->merchantId,
-                'CheckValue' => $code,
-                'RespondType' => 'JSON',
-                'MerchantOrderNo' => $merchantOrderNo,
+            'Amt'             => $amount,
+            'Version'         => '1.1',
+            'TimeStamp'       => time(),
+            'MerchantID'      => $this->merchantId,
+            'CheckValue'      => $code,
+            'RespondType'     => 'JSON',
+            'MerchantOrderNo' => $merchantOrderNo,
             ]
-        ]);
+            ]
+        );
 
         if ($result->getStatusCode() != 200) {
             return false;
@@ -410,43 +415,44 @@ class SpGatewayPaymentGateway extends Common\AbstractGateway implements Common\G
         return $response['Result'];
     }
 
-	public function genAesEncryptedPayment()
-	{
-		ksort($this->order);
+    public function genAesEncryptedPayment()
+    {
+        ksort($this->order);
 
-		$payloadQuery = http_build_query($this->order);
+        $payloadQuery = http_build_query($this->order);
 
-		$rawEncrypted = openssl_encrypt(
-			$payloadQuery,
-			'aes-256-cbc',
-			$this->hashKey,
-			OPENSSL_RAW_DATA,
-			$this->hashIV
-		);
+        $rawEncrypted = openssl_encrypt(
+            $payloadQuery,
+            'aes-256-cbc',
+            $this->hashKey,
+            OPENSSL_RAW_DATA,
+            $this->hashIV
+        );
 
-		$this->aesPayload = bin2hex($rawEncrypted);
+        $this->aesPayload = bin2hex($rawEncrypted);
 
-		return $this->aesPayload;
-	}
+        return $this->aesPayload;
+    }
 
-	public function genAesDecryptedPayment($encrypted)
-	{
+    public function genAesDecryptedPayment($encrypted)
+    {
 
-		$encryptedRaw = hex2bin($encrypted);
+        $encryptedRaw = hex2bin($encrypted);
 
-		$decrypted = openssl_decrypt(
-			$encryptedRaw,
-			'aes-256-cbc',
-			$this->hashKey,
-			OPENSSL_RAW_DATA,
-			$this->hashIV
-		);
+        $decrypted = openssl_decrypt(
+            $encryptedRaw,
+            'aes-256-cbc',
+            $this->hashKey,
+            OPENSSL_RAW_DATA,
+            $this->hashIV
+        );
 
-		$decryptedJson = json_decode($decrypted, true);
+        $decryptedJson = json_decode($decrypted, true);
 
-		if (json_last_error()) return $decrypted;
+        if (json_last_error()) {
+            return $decrypted;
+        }
 
-		return $decryptedJson;
-
+        return $decryptedJson;
     }
 }

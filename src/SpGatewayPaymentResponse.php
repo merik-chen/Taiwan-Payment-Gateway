@@ -53,7 +53,9 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             return false;
         }
 
-        $post = filter_var_array($_POST, [
+        $post = filter_var_array(
+            $_POST,
+            [
             'Status'            => FILTER_SANITIZE_STRING,
             'Message'           => FILTER_SANITIZE_STRING,
             'MerchantID'        => FILTER_SANITIZE_STRING,
@@ -82,7 +84,9 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             'Barcode_2'         => FILTER_SANITIZE_STRING,
             'Barcode_3'         => FILTER_SANITIZE_STRING,
             'PayStore'          => FILTER_SANITIZE_STRING
-        ], false);
+            ],
+            false
+        );
 
         if ($post['Status'] !== 'SUCCESS') {
             return false;

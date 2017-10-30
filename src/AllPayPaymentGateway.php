@@ -9,7 +9,8 @@ class AllPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInte
 
     /**
      * AllPayPaymentGateway constructor.
-     * @param array $config
+     *
+     * @param  array $config
      * @return AllPayPaymentGateway
      */
     public function __construct(array $config = [])
@@ -112,7 +113,7 @@ class AllPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInte
     }
 
     /**
-     * @param integer $months
+     * @param integer       $months
      * @param integer|float $totalAmount
      * @return AllPayPaymentGateway
      */
@@ -175,12 +176,12 @@ class AllPayPaymentGateway extends EcAllPayUtility implements Common\GatewayInte
     }
 
     /**
-     * @param string $merchantOrderNo
+     * @param string    $merchantOrderNo
      * @param float|int $amount
-     * @param string $itemDescribe
-     * @param string $orderComment
-     * @param string $respondType
-     * @param int $timestamp
+     * @param string    $itemDescribe
+     * @param string    $orderComment
+     * @param string    $respondType
+     * @param int       $timestamp
      * @throws \InvalidArgumentException
      * @return AllPayPaymentGateway
      */
