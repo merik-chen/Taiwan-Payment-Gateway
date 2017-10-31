@@ -6,6 +6,19 @@ use VoiceTube\TaiwanPaymentGateway\Common;
 
 class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common\ResponseInterface
 {
+
+    private function strippadding($string)
+    {
+        $strLast = ord(substr($string, -1));
+        $strLastChr = chr($strLast);
+        if (preg_match("/$strLastChr{" . $strLast . "}/", $string)) {
+            $string = substr($string, 0, strlen($string) - $strLast);
+            return $string;
+        } else {
+            return false;
+        }
+    }
+
     public function processOrder($type = 'JSON')
     {
         switch ($type) {
@@ -151,7 +164,7 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             $this->hashIV
         );
 
-        $decrypted = rtrim($decrypted, "\0");
+        $decrypted = $this->strippadding($decrypted);
 
         $decryptedJson = json_decode($decrypted, true);
 
