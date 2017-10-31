@@ -147,9 +147,11 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             $encryptedRaw,
             'aes-256-cbc',
             $this->hashKey,
-            OPENSSL_RAW_DATA,
+            OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING,
             $this->hashIV
         );
+
+        $decrypted = rtrim($decrypted, "\0");
 
         $decryptedJson = json_decode($decrypted, true);
 
