@@ -77,46 +77,93 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
             return false;
         }
 
-        $post = filter_var_array(
-            $_POST,
-            [
-            'Status'            => FILTER_SANITIZE_STRING,
-            'Message'           => FILTER_SANITIZE_STRING,
-            'MerchantID'        => FILTER_SANITIZE_STRING,
-            'Amt'               => FILTER_VALIDATE_INT,
-            'TradeNo'           => FILTER_SANITIZE_STRING,
-            'MerchantOrderNo'   => FILTER_SANITIZE_STRING,
-            'PaymentType'       => FILTER_SANITIZE_STRING,
-            'RespondType'       => FILTER_SANITIZE_STRING,
-            'CheckCode'         => FILTER_SANITIZE_STRING,
-            'PayTime'           => FILTER_SANITIZE_STRING,
-            'IP'                => FILTER_VALIDATE_IP,
-            'EscrowBank'        => FILTER_SANITIZE_STRING,
-            'TokenUseStatus'    => FILTER_VALIDATE_INT,
-            'RespondCode'       => FILTER_SANITIZE_STRING,
-            'Auth'              => FILTER_SANITIZE_STRING,
-            'Card6No'           => FILTER_SANITIZE_STRING,
-            'Card4No'           => FILTER_SANITIZE_STRING,
-            'Inst'              => FILTER_VALIDATE_INT,
-            'InstFirst'         => FILTER_VALIDATE_INT,
-            'InstEach'          => FILTER_VALIDATE_INT,
-            'ECI'               => FILTER_SANITIZE_STRING,
-            'PayBankCode'       => FILTER_SANITIZE_STRING,
-            'PayerAccount5Code' => FILTER_SANITIZE_STRING,
-            'CodeNo'            => FILTER_SANITIZE_STRING,
-            'Barcode_1'         => FILTER_SANITIZE_STRING,
-            'Barcode_2'         => FILTER_SANITIZE_STRING,
-            'Barcode_3'         => FILTER_SANITIZE_STRING,
-            'PayStore'          => FILTER_SANITIZE_STRING
-            ],
-            false
-        );
+        $post = $_POST;
 
         if ($post['Status'] !== 'SUCCESS') {
             return false;
         }
 
-        $post['matched'] = $this->matchCheckCode($post);
+        $matched = $this->matchCheckCode($post);
+
+        if ($matched === false) {
+            return false;
+        }
+
+        if ($this->version >= 1.4) {
+            $post = $this->decryptAesPayment($post['TradeInfo']);
+
+            $post['Result'] = filter_var_array(
+                $post['Result'],
+                [
+                    'Status' => FILTER_SANITIZE_STRING,
+                    'Message' => FILTER_SANITIZE_STRING,
+                    'MerchantID' => FILTER_SANITIZE_STRING,
+                    'Amt' => FILTER_VALIDATE_INT,
+                    'TradeNo' => FILTER_SANITIZE_STRING,
+                    'MerchantOrderNo' => FILTER_SANITIZE_STRING,
+                    'PaymentType' => FILTER_SANITIZE_STRING,
+                    'RespondType' => FILTER_SANITIZE_STRING,
+                    'CheckCode' => FILTER_SANITIZE_STRING,
+                    'PayTime' => FILTER_SANITIZE_STRING,
+                    'IP' => FILTER_VALIDATE_IP,
+                    'EscrowBank' => FILTER_SANITIZE_STRING,
+                    'TokenUseStatus' => FILTER_VALIDATE_INT,
+                    'RespondCode' => FILTER_SANITIZE_STRING,
+                    'Auth' => FILTER_SANITIZE_STRING,
+                    'Card6No' => FILTER_SANITIZE_STRING,
+                    'Card4No' => FILTER_SANITIZE_STRING,
+                    'Inst' => FILTER_VALIDATE_INT,
+                    'InstFirst' => FILTER_VALIDATE_INT,
+                    'InstEach' => FILTER_VALIDATE_INT,
+                    'ECI' => FILTER_SANITIZE_STRING,
+                    'PayBankCode' => FILTER_SANITIZE_STRING,
+                    'PayerAccount5Code' => FILTER_SANITIZE_STRING,
+                    'CodeNo' => FILTER_SANITIZE_STRING,
+                    'Barcode_1' => FILTER_SANITIZE_STRING,
+                    'Barcode_2' => FILTER_SANITIZE_STRING,
+                    'Barcode_3' => FILTER_SANITIZE_STRING,
+                    'PayStore' => FILTER_SANITIZE_STRING
+                ],
+                false
+            );
+        } else {
+            $post = filter_var_array(
+                $post,
+                [
+                    'Status' => FILTER_SANITIZE_STRING,
+                    'Message' => FILTER_SANITIZE_STRING,
+                    'MerchantID' => FILTER_SANITIZE_STRING,
+                    'Amt' => FILTER_VALIDATE_INT,
+                    'TradeNo' => FILTER_SANITIZE_STRING,
+                    'MerchantOrderNo' => FILTER_SANITIZE_STRING,
+                    'PaymentType' => FILTER_SANITIZE_STRING,
+                    'RespondType' => FILTER_SANITIZE_STRING,
+                    'CheckCode' => FILTER_SANITIZE_STRING,
+                    'PayTime' => FILTER_SANITIZE_STRING,
+                    'IP' => FILTER_VALIDATE_IP,
+                    'EscrowBank' => FILTER_SANITIZE_STRING,
+                    'TokenUseStatus' => FILTER_VALIDATE_INT,
+                    'RespondCode' => FILTER_SANITIZE_STRING,
+                    'Auth' => FILTER_SANITIZE_STRING,
+                    'Card6No' => FILTER_SANITIZE_STRING,
+                    'Card4No' => FILTER_SANITIZE_STRING,
+                    'Inst' => FILTER_VALIDATE_INT,
+                    'InstFirst' => FILTER_VALIDATE_INT,
+                    'InstEach' => FILTER_VALIDATE_INT,
+                    'ECI' => FILTER_SANITIZE_STRING,
+                    'PayBankCode' => FILTER_SANITIZE_STRING,
+                    'PayerAccount5Code' => FILTER_SANITIZE_STRING,
+                    'CodeNo' => FILTER_SANITIZE_STRING,
+                    'Barcode_1' => FILTER_SANITIZE_STRING,
+                    'Barcode_2' => FILTER_SANITIZE_STRING,
+                    'Barcode_3' => FILTER_SANITIZE_STRING,
+                    'PayStore' => FILTER_SANITIZE_STRING
+                ],
+                false
+            );
+        }
+
+        $post['matched'] = true;
 
         return $post;
     }
@@ -151,7 +198,7 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
         return $matchedCode == strtoupper($this->hashMaker($checkStr));
     }
 
-    public function decryptAesPayment($encrypted)
+    public function decryptAesPayment($encrypted, $type = 'JSON')
     {
 
         $encryptedRaw = hex2bin($encrypted);
@@ -166,12 +213,23 @@ class SpGatewayPaymentResponse extends Common\AbstractResponse implements Common
 
         $decrypted = $this->strippadding($decrypted);
 
-        $decryptedJson = json_decode($decrypted, true);
+        switch ($type) {
+            case 'JSON':
+                $decryptedJson = json_decode($decrypted, true);
 
-        if (json_last_error()) {
-            return $decrypted;
+                if (json_last_error()) {
+                    throw new \Exception('can not parse json');
+                };
+
+                return $decryptedJson;
+                break;
+            case 'POST':
+                $decryptedForm = parse_str($decrypted);
+                return $decryptedForm;
+                break;
+            default:
+                throw new \Exception('wrong type');
+                break;
         }
-
-        return $decryptedJson;
     }
 }
